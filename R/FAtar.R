@@ -62,7 +62,24 @@ zip_skip <- function(zfile, skip, by=10^7) {
   zfile
 }
 
-#' Parse a (gzipped) tar file and make a list of the files
+
+zip_type <- function(filename) {
+  zf <- file(filename, open='rb')
+  on.exit(close(zf))
+  sig <- as.character(readBin(zf, what="raw", n=10))
+  if (all(sig[1:7] == c("fd","37","7a","58","5a","00","00"))) {
+    return("xz")
+  } else if (all(sig[1:2] == c("1f","8b"))) {
+    return("gz")
+  } else if (all(sig[1:3] == c("42","5a","68"))) {
+    return("bz")
+  } else {
+    return(NA)
+  }
+}
+
+
+#' Parse a (zipped) tar file and make a list of the files
 #' @param archname The name of a (gzipped) tar file
 #' @param gzip Set to TRUE if the archive is a gzipped file
 #' @return A named list of the files contained in the archive. 
@@ -74,27 +91,41 @@ ParseTar <- function(archname, gzip=FALSE) {
   blocksize <- 512
   if (!file.exists(archname)) stop("File ", archname, " not found")
   # open archive
-  if (gzip) tf <- gzfile(archname, open='rb')
-  else tf <- file(archname, open='rb')
+  # check file type
+  if (gzip) {
+    ztype <- zip_type(archname)
+    tf <- switch(ztype,
+               "gz" = gzfile(archname, open="rb"),
+               "xz" = xzfile(archname, open="rb"),
+               "bz" = bzfile(archname, open="rb"),
+               exit("unknown compression type")
+               )
+  } else tf <- file(archname, open='rb')
   on.exit(close(tf))
   # offset of first entry is zero
   fnames <- list()
 
   offset <- 0
   nfile <- 0
+  tf_loc <- 0
   while (TRUE) {
     # goto beginning of entry
-    # in gzipped archives and on windows: avoid using seek()!!!
-    if (!gzip) seek(tf, offset)
+    # in zipped archives and on windows: avoid using seek()!!!
+    if (!gzip) {
+      seek(tf, offset)
+      tf_loc <- offset
+    } else if (offset > tf_loc) {
     ### but for up to ~10MB : no problem, I guess
-    else if (offset > seek(tf)) {
+    ### "seek" is not even defined for xz files...
       ## large file: split readBin into blocks of e.g. 1E7 bytes (~10MB)?
       # readBin(tf, what = "raw", n = offset - seek(tf))
-      tf <- zip_skip(tf, offset - seek(tf))
+      tf <- zip_skip(tf, offset - tf_loc)
+      tf_loc <- offset
     }
     # read file name
     # readBin(..., what="char") can give errors in gzipped file
     header <- readBin(tf, what="raw", n=blocksize)
+    tf_loc <- tf_loc + blocksize
     if (length(header) < blocksize) break
     # a tar archive usually ends with two 0-filled records
     if (all(header == 0)) break
