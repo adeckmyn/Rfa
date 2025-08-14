@@ -27,3 +27,28 @@ int fa_mmax(int n,int nsmax,int nmsmax);
 void fa_countval_spec(int* nmsmax,int *nsmax,int* sptrunc,int*result);
 double fast_pow(double x, int n);
 double IBMfloat(unsigned char*x);
+
+// main function prototypes
+void fa_fastfind_name(char **filename, double *tar_offset,char **fnm, char **fname,
+                      double *foffset, int *flen, int *findex,int *err);
+void fa_fastfind_mem(unsigned char *membuffer, int *bufsize,
+                     char **fnm, char **fname,
+                     double *foffset, int *flen, int *findex,int *err);
+void fa_fastfind(FILE* fafile,  double *tar_offset,char **fnm, char **fname,
+                      double *foffset, int *flen, int *findex,int *err);
+void fa_parse_char(char** filename, double* tar_offset,
+		   int* ninfields,
+                   char** fnames, double* foffset, int* flen, int*findex,
+                   int* spectral, int* ngrib, int* nbits,int* sptrunc, int* sppow,
+                   double* hoffset, int* hlen, int*hindex, int* lparse, int* err);
+void fa_parse_mem(unsigned char* membuffer, int* bufsize,
+                  int* ninfields,
+                  char** fnames, double* foffset, int* flen, int*findex,
+                  int* spectral, int* ngrib, int* nbits, int* sptrunc, int* sppow,
+                  double* hoffset, int* hlen, int*hindex, int* lparse, int* err);
+void fa_parse_file(FILE* fafile, double* tar_offset,
+		   int* ninfields,
+                   char** fnames, double* foffset,int* flen, int*findex,
+                   int* spectral, int* ngrib, int* nbits, int* sptrunc, int* sppow,
+                   double* hoffset, int* hlen, int*hindex, int* lparse, int* err);
+

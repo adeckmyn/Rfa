@@ -8,8 +8,8 @@ FAdec_msg <- function(inbuf, faframe, clip=TRUE, outform="G", quiet=TRUE){
     nbits <- readBin(inbuf[17:24], what="int", size=8, n=1, endian="big")
   }
 
-  if (is.null(faframe$nmsmax) | is.null(faframe$nsmax) | 
-     is.null(faframe$ndgl) | is.null(faframe$ndlon) ) stop("Incorrect FA frame.") 
+  if (is.null(faframe$nmsmax) | is.null(faframe$nsmax) |
+     is.null(faframe$ndgl) | is.null(faframe$ndlon) ) stop("Incorrect FA frame.")
 
   if (ngrib < 100) {
     # CLASSIC FA
@@ -20,8 +20,8 @@ FAdec_msg <- function(inbuf, faframe, clip=TRUE, outform="G", quiet=TRUE){
       ndata <- faframe$ndgl * faframe$ndlon
     }
     if (!quiet) {
-      cat("FA message length:",length(inbuf),"bytes\n")
-      cat("Allocating vectors for ndata=",ndata,"values.\n")
+      cat("FA message length: ", length(inbuf), " bytes\n")
+      cat("Allocating vectors for ndata=", ndata, " values.\n")
     }
     if (ngrib <= 0 & !lspec) {
       # non-compacted grid point data. COULD be from surfex!
@@ -98,7 +98,7 @@ FAdec_msg <- function(inbuf, faframe, clip=TRUE, outform="G", quiet=TRUE){
   return(FAdata)
 }
 
- 
+
 ### the basic function for FA decoding
 FAdec <- function(fa, ...){
   UseMethod("FAdec")
@@ -139,7 +139,7 @@ FAdec.character <- function(fa, field , clip=TRUE, outform="G", archname=NULL, t
   if (!quiet) cat(filename,tar.offset,fnm,"\n")
   # NOTE: for a large tar file, 32bit integers are too small to contain tar.offset!
   # so we use DOUBLE (because R doesn't support 64bit integer)
-  fastfind <- .C("fa_fastfind_name",as.character(path.expand(filename)),
+  fastfind <- .C("fa_fastfind_name", as.character(path.expand(filename)),
                   tar.offset=as.numeric(tar.offset),
                   fnm=fnm,fname="1234567890123456",foffset=numeric(1),
                   flen=integer(1),findex=integer(1),err=integer(1))
@@ -174,8 +174,8 @@ FAdec.character <- function(fa, field , clip=TRUE, outform="G", archname=NULL, t
 }
 
 FAdec.FAfile <- function(fa, field, clip=TRUE, outform="G", quiet=TRUE, drop_missing=TRUE, ...){
-  faframe <- attr(fa,"frame")
-  if (faframe$FAtype!="aladin") {
+  faframe <- attr(fa, "frame")
+  if (faframe$FAtype != "aladin") {
     cat("WARNING: this is an arpege file. Decoding is not supported.\nAnything may happen!\n")
   }
   #-- 1. fix the filename
@@ -185,7 +185,7 @@ FAdec.FAfile <- function(fa, field, clip=TRUE, outform="G", quiet=TRUE, drop_mis
   fnr <- vapply(field, function(f) FAfind(fa, f)[1], 0.)
 
   #
-  if (any(is.na(fnr))) { 
+  if (any(is.na(fnr))) {
     missing <- which(is.na(fnr))
     warning("Fields ", paste(field[missing], collapse=", "), " not found.")
     if (drop_missing) fnr <- fnr[!is.na(fnr)]
@@ -194,17 +194,21 @@ FAdec.FAfile <- function(fa, field, clip=TRUE, outform="G", quiet=TRUE, drop_mis
   #
   myfun <- function(ff) {
     if (is.na(ff)) {
-      NA 
+      NA
     } else {
       fname <- fa$list$name[ff]
       fpos <- fa$list$offset[ff]
       flen <- fa$list$length[ff]
-      inbuf <- FAread_msg(filename, fpos, flen)
+      if (is.null(attr(fa, "membuff"))) {
+        inbuf <- FAread_msg(filename, fpos, flen)
+      } else {
+        inbuf <- attr(fa, "membuff")[(fpos+1):(fpos + flen)]
+      }
       FAdec_msg(inbuf, faframe, clip=clip, outform=outform, quiet=quiet)
     }
   }
   #-- 4. Add meta-data as attributes
-  if (!clip) dims <- c(faframe$ndlon, faframe$ndgl) 
+  if (!clip) dims <- c(faframe$ndlon, faframe$ndgl)
   else dims <- c(faframe$ndlux - faframe$ndlun + 1,faframe$ndgux - faframe$ndgun + 1)
 
   if (outform=="G"){
@@ -214,8 +218,8 @@ FAdec.FAfile <- function(fa, field, clip=TRUE, outform="G", quiet=TRUE, drop_mis
     else origin <- sprintf( "%s in %s",attr(fa,"filename"),attr(fa,"tarfile"))
     if (length(fnr) > 1) {
       result <- vapply(fnr, myfun, FUN.VALUE=array(1., dim=dims))
-      result <- meteogrid::as.geofield(result, domain=fa, 
-                          info = list("origin" = origin, "time" = attr(fa, "time")), 
+      result <- meteogrid::as.geofield(result, domain=fa,
+                          info = list("origin" = origin, "time" = attr(fa, "time")),
 			  extra_dim = list("prm"=fa$list$name[fnr]))
     } else {
       info <- c(FAdescribe(fa$list$name[fnr]), time=list(attr(fa, "time")),
@@ -251,7 +255,7 @@ FAread_msg <- function(fa, fpos, flen) {
         if (fpos < attr(fa, "tar.offset")) stop("FAread_msg: field position smaller than tar offset.")
       } else filename <- attr(fa, "filename")
     } else stop("FAread_msg error: bad fa")
-
+    # FIXME: will fail for compressed files tgz etc.
     fa <- file(filename, open="rb")
   }
   #--  jump to data location & read message

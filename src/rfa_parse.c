@@ -14,27 +14,53 @@
 
 // fastfind: given a field name, find it's index, byte location & length
 // We use DOUBLE for tar_offset and foffset, because 32-bit integers are too limited
+
 void fa_fastfind_name(char **filename, double *tar_offset,char **fnm, char **fname,
                       double *foffset, int *flen, int *findex,int *err){
   FILE* fafile;
+
+#ifdef DEBUG
+  Rprintf("Fastfind in file %s\n",*filename);
+  Rprintf("tar_offset=%i, fname=%s\n",(int)*tar_offset,*fnm);
+#endif
+  if(!(fafile=fopen(*filename, "r"))) {
+    *err=10;
+    Rprintf("Couldn't open file!\n");
+    return;
+  };
+
+  fa_fastfind(fafile, tar_offset, fnm, fname,
+              foffset, flen, findex, err);
+}
+
+void fa_fastfind_mem(unsigned char *membuffer, int *bufsize,
+                     char **fnm, char **fname,
+                     double *foffset, int *flen, int *findex,int *err){
+  FILE* fafile;
+  double tar_offset=0.;
+
+  if(!(fafile=fmemopen(membuffer, *bufsize, "r"))) {
+    *err=10;
+    Rprintf("Couldn't open memory buffer!\n");
+    return;
+  };
+
+  fa_fastfind(fafile, &tar_offset, fnm, fname,
+              foffset, flen, findex, err);
+}
+
+
+void fa_fastfind(FILE* fafile,  double *tar_offset,char **fnm, char **fname,
+                      double *foffset, int *flen, int *findex,int *err){
   int blocksize, nfields, maxfields,nameblock_size,nlist;
   int i,j,k,lfound;
   int64_t header[22],buff[3],next_byte,name_section_offset;
   char sbuf[17];
   int little_endian=( *(uint16_t*)"a" < 255); // TRUE if little-endian
 
-#ifdef DEBUG
-  Rprintf("Fastfind in file %s\n",*filename);
-  Rprintf("tar_offset=%i, fname=%s\n",(int)*tar_offset,*fnm);
-#endif
 
   sbuf[16]='\0';
   lfound=0;
-  if(!(fafile=fopen(*filename,"r"))) {
-    *err=10;
-    Rprintf("Couldn't open file!\n");
-    return;
-  };
 
   if(*tar_offset) fseek(fafile,(int64_t) *tar_offset,SEEK_SET);
 
@@ -111,13 +137,56 @@ void fa_fastfind_name(char **filename, double *tar_offset,char **fnm, char **fna
 // Parse a complete file and return the list of fields
 // FIXME: this may crash if the header data is incorrect
 //        a simple error would be nicer
-void fa_parse_file(char** filename,double* tar_offset,
+
+void fa_parse_name(char** filename, double* tar_offset,
 		   int* ninfields,
-                   char** fnames,double* foffset,int* flen,int*findex,
-                   int* spectral,int* ngrib, int* nbits,int* sptrunc,int* sppow,
-                   double* hoffset,int* hlen,int*hindex,int* lparse,int* err){
+                   char** fnames, double* foffset, int* flen, int*findex,
+                   int* spectral, int* ngrib, int* nbits,int* sptrunc, int* sppow,
+                   double* hoffset, int* hlen, int*hindex, int* lparse, int* err){
 
   FILE* fafile;
+  *err=0;
+  if(!(fafile=fopen(*filename,"r"))) {
+    *err=10;
+    Rprintf("Couldn't open file!\n");
+    return;
+  };
+  fa_parse_file(fafile,
+               tar_offset, ninfields,
+               fnames, foffset, flen, findex,
+               spectral, ngrib, nbits, sptrunc, sppow,
+               hoffset, hlen, hindex, lparse, err);
+}
+
+void fa_parse_mem(unsigned char* membuffer, int* bufsize,
+                  int* ninfields,
+                  char** fnames, double* foffset, int* flen, int*findex,
+                  int* spectral, int* ngrib, int* nbits, int* sptrunc, int* sppow,
+                  double* hoffset, int* hlen, int*hindex, int* lparse, int* err){
+
+  FILE* fafile;
+  double tar_offset=0.;
+#ifdef DEBUG
+  Rprintf("Opening memory buffer, length=%d!\n", *bufsize);
+#endif
+  if(!(fafile=fmemopen(membuffer, *bufsize, "r"))) {
+    *err=10;
+    Rprintf("Couldn't open memory buffer!\n");
+    return;
+  };
+  fa_parse_file(fafile,
+               &tar_offset, ninfields,
+               fnames, foffset, flen, findex,
+               spectral, ngrib, nbits, sptrunc, sppow,
+               hoffset, hlen, hindex, lparse, err);
+}
+
+void fa_parse_file(FILE* fafile, double* tar_offset,
+		   int* ninfields,
+                   char** fnames, double* foffset,int* flen, int*findex,
+                   int* spectral, int* ngrib, int* nbits, int* sptrunc, int* sppow,
+                   double* hoffset, int* hlen, int*hindex, int* lparse, int* err){
+
   int blocksize, nfields, nholes, nmeta;
   int i,j,k,ccfields,ccholes,ccholes2,ccfields2,*is_hole;
   int maxfields,nameblock_size;
@@ -128,14 +197,9 @@ void fa_parse_file(char** filename,double* tar_offset,
   char sbuf[17],*empty="                ";
 
   *err=0;
-  if(!(fafile=fopen(*filename,"r"))) {
-    *err=10;
-    Rprintf("Couldn't open file!\n");
-    return;
-  };
 
 #ifdef DEBUG
-  Rprintf("Opening %s at offset %i\n",*filename,*tar_offset);
+  Rprintf("Opening file at offset %i\n", *tar_offset);
   if (little_endian) Rprintf("This is a little_endian machine.\n");
   else Rprintf("This is a big_endian machine.\n");
 #endif

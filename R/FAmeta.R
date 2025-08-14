@@ -2,29 +2,42 @@
 ### I decided not to read them with standard FAdec.
 ### This is even independent from FAopen !
 FAread_meta <- function(filename, archname=NULL, quiet=TRUE){
-
-  if (inherits(filename, "FAfile")) { # it's an FA object, not a filename
-    archname <- attr(filename, "tarfile")
-    tar.offset <- attr(filename, "tar.offset")
-    filename <- attr(filename, "filename")
+  if (inherits(filename, "connection")) {
+    # here we suppose it's a bsic file pointer, NOT in an archive!
+    ff <- filename
+    offset <- 0
   } else {
-    if (!is.null(archname)) {
-      tar.offset <- FindInTar(archname, filename)
-    } else if (!is.null(attr(filename, "tarfile"))) {
-      archname <- attr(filename, "tarfile")
-      tar.offset <- attr(filename, "tar.offset")
+    on.exit(try(close(ff)))
+    if (inherits(filename, "raw")) {
+      ff <- rawConnection(filename)
+      offset <- 0
+    } else if (!is.null(attr(filename, "membuff"))) {
+      ff <- rawConnection(attr(filename, "membuff"))
+      offset <- 0
     } else {
-      tar.offset <- 0
+      if (inherits(filename, "FAfile")) { # it's an FA object, not a filename
+        archname <- attr(filename, "tarfile")
+        offset <- attr(filename, "tar.offset")
+        filename <- attr(filename, "filename")
+      } else {
+        if (!is.null(archname)) {
+          # FIXME: this will be very inefficient with compressed archives
+          offset <- FindInTar(archname, filename)
+        } else if (!is.null(attr(filename, "tarfile"))) {
+          archname <- attr(filename, "tarfile")
+          offset <- attr(filename, "tar.offset")
+        } else {
+          offset <- 0
+        }
+      }
+      if (is.null(archname)) {
+        ff <- file(filename, open="rb")
+      } else {
+        ff <- file(archname, open="rb")
+      }
     }
   }
-   
-  on.exit(try(close(ff)))
-  if (is.null(archname)) {
-    ff <- file(filename, open="rb") 
-  } else {
-    ff <- file(archname, open="rb")
-  }
-  seek(ff, tar.offset)
+  seek(ff, offset)
 
 #-- in fact the second value gives the length of this section. But it is always 22.
   FAheader <- readBin(ff, what="integer", n=22, size=8, endian="big")
@@ -32,7 +45,7 @@ FAread_meta <- function(filename, archname=NULL, quiet=TRUE){
   nfields <- FAheader[6]
   nholes <- FAheader[21]
   if (nfields - nholes < 7) stop("File contains less than 7 data sectors, so no complete frame.")
-  seek(ff, tar.offset + blocksize)
+  seek(ff, offset + blocksize)
 ### it is possible to have 'holes' in the meta section!
 ### so we must be prepared for that.
 ### let's read to 8+nholes (if possible)
@@ -47,19 +60,19 @@ FAread_meta <- function(filename, archname=NULL, quiet=TRUE){
   if (FAnames[4] != "CADRE-SINLATITUD") stop("FRAME not at expected location. Not a regular FA file.")
   if (FAnames[5] != "CADRE-FOCOHYBRID") stop("FRAME not at expected location. Not a regular FA file.")
   if (FAnames[7] != "DATE-DES-DONNEES") stop("FRAME not at expected location. Not a regular FA file.")
-# check for new DATX_DES_DONNEES field
+# check for "new" DATX_DES_DONNEES field
   if (length(FAnames)>7 && FAnames[8]=="DATX-DES-DONNEES") {
     if (!quiet) cat("Found DATX-DES-DONNEES. Adding to meta data.\n")
     nmeta <- 8
   } else nmeta <- 7
   FAnames <- FAnames[1:nmeta]
-  seek(ff, tar.offset+2*blocksize)
+  seek(ff, offset+2*blocksize)
   FAlen <- numeric(nmeta)
   FApos <- numeric(nmeta)
   j <- 1
   for (i in 1:nmeta) {
     ## skip any holes
-    while( is.hole[j] ) { 
+    while( is.hole[j] ) {
       readBin(ff, what="integer", size=8, n=2, endian="big")
       j <- j+1
     }
@@ -67,10 +80,10 @@ FAread_meta <- function(filename, archname=NULL, quiet=TRUE){
     FApos[i] <- readBin(ff, what="integer", size=8, n=1, endian="big")
     j <- j+1
   }
-  
+
   metalist <- list()
   for (i in 1:nmeta) {
-    seek(ff,tar.offset+(FApos[i]-1)*8)
+    seek(ff, offset+(FApos[i]-1)*8)
     fatype <- ifelse(is.element(i, c(1,3,6,7,8)), "integer", "numeric")
     metalist[[i]] <- readBin(ff, what=fatype, n=FAlen[i], size=8, endian="big")
   }
@@ -81,6 +94,13 @@ FAread_meta <- function(filename, archname=NULL, quiet=TRUE){
 }
 
 FAread_header <- function(fa) {
+  if (inherits(fa, "raw")) {
+    return(readBin(fa, what="integer", n=22, size=8, endian="big"))
+  }
+  if (!is.null(attr(fa, "membuff"))) {
+    return(readBin(attr(fa, "membuff"), what="integer", n=22, size=8, endian="big"))
+  }
+
   offset <- 0
   if (!inherits(fa, "connection")) {
     on.exit(try(close(fa), silent=TRUE))
@@ -97,7 +117,7 @@ FAread_header <- function(fa) {
     fa <- file(filename,open="rb")
   }
   seek(fa, offset, rw="read")
-  header <- readBin(fa,what="integer",n=22,size=8,endian="big")
+  header <- readBin(fa, what="integer", n=22, size=8, endian="big")
   header
 }
 
@@ -167,13 +187,14 @@ FAwrite_meta <- function(filename, metadata) {
 
 ### DANGEROUS: renaming meta-data (only frame name and DATX-DES-DONNEES are reasonably safe)
 FArename.meta <- function(fa, field, newname, quiet=TRUE) {
-  if (!inherits(fa,"FAfile")) fa <- FAopen(fa,quiet=quiet)
+  if (!inherits(fa, "FAfile")) fa <- FAopen(fa, quiet=quiet)
   if (!is.null(attr(fa,"tarfile"))) stop("Manipulation of files in an archive is forbidden. Read only!")
+  if (!is.null(attr(fa,"membuff"))) stop("Manipulation of compressed files in a memory buffer is forbidden. Read only!")
   oldmeta <- FAread_meta(fa)
 # only frame name may be changed by giving 'field' as a number
   if (field==6) field <- names(oldmeta)[6]
   if (field==8) field <- "DATX-DES-DONNEES"
-  i <- match(field, names(oldmeta)) 
+  i <- match(field, names(oldmeta))
   if (is.na(i)) stop(paste(field,"not found."))
 
   if (nchar(newname)<5) stop("Field name must have at least 5 characters.")
@@ -253,7 +274,7 @@ FAframe <- function(metadata){
   FAtype=ifelse(FAdim[5]<0,"aladin","arpege")
   if (FAtype=="aladin"){
 #-- "old style" aladin geometry (up to about 2006)
-    if (FAsll[1]>=0){ 
+    if (FAsll[1]>=0){
       frame$nroteq <- FAsll[1]
       frame$rpk    <- FAsll[10]
       frame$lonr   <- FAsll[2]*180/pi
@@ -308,7 +329,7 @@ FAframe <- function(metadata){
     frame$ndlux <- FArpp[4]
     frame$ndgun <- FArpp[5]
     frame$ndgux <- FArpp[6]
-#    frame$nbzonl<- FArpp[7] 
+#    frame$nbzonl<- FArpp[7]
 #    frame$nbzong<- FArpp[8]
   } else {
     cat("This appears to be an Arpege file.\n")
@@ -355,7 +376,7 @@ FAdomain <- function(faframe,quiet=TRUE){
 ### FArpp(2) : -1 means gridpoint on C+I+E, +1 spectral
 ### For the physical domain: no extension zone !!!
   nx <- faframe$ndlux - faframe$ndlun + 1
-  ny <- faframe$ndgux - faframe$ndgun + 1 
+  ny <- faframe$ndgux - faframe$ndgun + 1
   if (!quiet) cat("C+I dim:",nx,"x",ny,"\n")
   if (!quiet) cat("with extension zone:",faframe$ndgl,"x",faframe$ndlon,"\n")
   if (faframe$rpk == -9){
@@ -373,7 +394,7 @@ FAdomain <- function(faframe,quiet=TRUE){
   domain <- meteogrid::Make.domain(
               projtype = projtype, reflon = faframe$lon0, reflat = faframe$lat0,
               nxny = c(nx,ny), dxdy = c(faframe$delx, faframe$dely),
-              clonlat = c(faframe$lonc, faframe$latc), 
+              clonlat = c(faframe$lonc, faframe$latc),
               exey = c(faframe$ndlon - nx, faframe$ndgl-ny),
               tilt = if (projtype == "omerc") faframe$lon0 else 0,
               earth = list(R = 6371229))

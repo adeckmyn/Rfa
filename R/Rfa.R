@@ -29,29 +29,43 @@ print.FAframe <- function(x, ...){
 
 FAopen <- function(filename, archname=NULL, tar.offset=NULL, lparse=TRUE, quiet=TRUE){
   if (inherits(filename, "FAfile")) return(filename)
-  if (!is.character(filename)) stop("Not a regular filename")
+  if (inherits(filename, "raw")) {
+    if (!quiet) print("Opening FA in raw memory buffer.")
+    membuff <- TRUE
+    mbuf <- filename
+    filename <- "membuff"
+    FAheader <- readBin(mbuf, what="integer", n=22, size=8, endian="big")
+  } else if (!is.null(attr(filename, "membuff"))) {
+    if (!quiet) print("Opening FA in memory buffer.")
+    membuff <- TRUE
+    mbuf <- attr(filename, "membuff")
+    FAheader <- readBin(mbuf, what="integer", n=22, size=8, endian="big")
+  } else {
+    membuff <- FALSE
+    if (!is.character(filename)) stop("Not a regular filename")
 ### this routine understands the "large-scale" structure of the FA file.
 ### It is an LFI file with some special records.
 ### The first 3 parts of the FA or LFI file have dimension blocksize
 ### tar.offset is used if the file is part of a tar archive
 ### lparse=TRUE by default. It is sometimes useful to have an overview of
 ### spectral, truncation, nbits in grib compactification etc.
-  if (is.null(archname)) archname <- attr(filename, "tarfile")
-  if (is.null(tar.offset)) tar.offset <- attr(filename, "tar.offset")
+    if (is.null(archname)) archname <- attr(filename, "tarfile")
+    if (is.null(tar.offset)) tar.offset <- attr(filename, "tar.offset")
 
-  if (is.null(archname)) {
-    tar.offset <- 0
-    fnam <- path.expand(filename)
-  } else {
-    if (is.null(tar.offset)) tar.offset <- FindInTar(archname,filename,quiet=quiet)
-    if (!quiet) cat("Tarfile offset:",tar.offset,"\n")
-    fnam <- archname
+    if (is.null(archname)) {
+      tar.offset <- 0
+      fnam <- path.expand(filename)
+    } else {
+      if (is.null(tar.offset)) tar.offset <- FindInTar(archname, filename, quiet=quiet)
+      if (!quiet) cat("Tarfile offset:", tar.offset, "\n")
+      fnam <- archname
+    }
+    if (!file.exists(fnam)) stop(sprintf("File %s does not exist.",fnam))
+    ff <- file(fnam, "rb")
+    seek(ff, tar.offset)
+    FAheader <- readBin(ff, what="integer", n=22, size=8, endian="big")
+    close(ff)
   }
-  if (!file.exists(fnam)) stop(sprintf("File %s does not exist.",fnam))
-  ff <- file(fnam,"rb")
-  seek(ff, tar.offset)
-  FAheader <- readBin(ff, what="integer", n=22, size=8, endian="big")
-  close(ff)
   if (!quiet) print(FAheader)
 
   #-- some first-order checking:
@@ -67,17 +81,43 @@ FAopen <- function(filename, archname=NULL, tar.offset=NULL, lparse=TRUE, quiet=
   #-- offset values are passed as double, because we need 64bits, especially in tar archives,
   #-- to overcome 4GB file size limit.
   # FIXME: for safety, we *must* also pass nfields so it can be checked!
-  faparse <- .C("fa_parse_file",filename=path.expand(fnam),tar_offset=as.numeric(tar.offset),
-                               nfields=as.integer(nfields),
-                               fnames=rep("                ",nfields),foffset=numeric(nfields),
-                               flen=integer(nfields),findex=integer(nfields),
-                               spectral=integer(nfields),
-                               ngrib=integer(nfields),
-                               nbits=integer(nfields),
-                               sptrunc=integer(nfields),sppow=integer(nfields),
-                               hoffset=numeric(nholes+1),hlen=integer(nholes+1),
-                               hindex=integer(nholes+1),lparse=as.integer(lparse),err=integer(1))
-  metadata <- FAread_meta(filename, archname=archname)
+  if (!membuff) {
+    faparse <- .C("fa_parse_name",
+                  filename=path.expand(fnam),
+                  tar_offset=as.numeric(tar.offset),
+                  nfields=as.integer(nfields),
+                  fnames=rep("                ",nfields),
+                  foffset=numeric(nfields),
+                  flen=integer(nfields),
+                  findex=integer(nfields),
+                  spectral=integer(nfields),
+                  ngrib=integer(nfields),
+                  nbits=integer(nfields),
+                  sptrunc=integer(nfields), sppow=integer(nfields),
+                  hoffset=numeric(nholes+1), hlen=integer(nholes+1),
+                  hindex=integer(nholes+1), 
+                  lparse=as.integer(lparse),err=integer(1))
+    metadata <- FAread_meta(filename, archname=archname)
+  } else {
+    buflen <-  length(mbuf)
+    if (!quiet) {
+      cat("Calling fa_parse_mem(). buflen=", buflen, "\n")
+    }
+    faparse <- .C("fa_parse_mem",
+                  membuffer=as.raw(mbuf),
+                  bufsize=as.integer(buflen),
+                  nfields=as.integer(nfields),
+                  fnames=rep("                ", nfields),
+                  foffset=numeric(nfields),
+                  flen=integer(nfields),findex=integer(nfields),
+                  spectral=integer(nfields),
+                  ngrib=integer(nfields),
+                  nbits=integer(nfields),
+                  sptrunc=integer(nfields),sppow=integer(nfields),
+                  hoffset=numeric(nholes+1),hlen=integer(nholes+1),
+                  hindex=integer(nholes+1),lparse=as.integer(lparse),err=integer(1))
+    metadata <- FAread_meta(mbuf, archname=archname)
+  }
 #-- recent addition: frame may have 8th field DATX-DES-DONNEES
 #-- so we can no longer hard-code the number "7"!
   nmeta <- length(metadata)
@@ -120,6 +160,7 @@ FAopen <- function(filename, archname=NULL, tar.offset=NULL, lparse=TRUE, quiet=
   attr(result, "time") <- FAtime(metadata)
   attr(result, "tarfile") <- archname
   attr(result, "tar.offset") <- tar.offset
+  if (membuff) attr(result, "membuff") <- mbuf
   result
 }
 
