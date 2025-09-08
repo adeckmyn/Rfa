@@ -15,7 +15,7 @@ FAopenTar(archname,lparse=FALSE,quiet=TRUE)
 
 \arguments{
 \item{filename}{A character string with complete path.}
-\item{archname}{If the FA file is part of a tar archive. A character string with complete path.}
+\item{archname}{If the FA file is part of a tar archive. A character string with complete path. This must be a tar file or compressed with xz or gz.}
 \item{tar.offset}{Byte location of the FA file within the tar archive. If NULL, the file is searched for.}
 \item{lparse}{If FALSE, the FA file(s) are only searched for all available fields and their bit adresses. If TRUE, the FA file(s) are parsed completely and the main characteristics off every field are also returned (spectral, grib encoding etc.). This is quit fast and can be useful (it is not vital), but may be slow for large tar archives over a slow conection.}
 \item{quiet}{If FALSE, several diagnostic messages are printed.}
