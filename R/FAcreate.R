@@ -7,7 +7,7 @@ FAmake.header <- function(sector.size=1000, nsector=4){
   now <- Sys.time()
   now.date <- as.integer(format(now,"%Y%m%d"))
   now.time <- as.integer(format(now,"%H%M%S"))
-# default header: blocksize 
+# default header: blocksize
   header <- rep(0,22)
   header[1]  <- sector.size # sector size (in 8 byte words, not bytes)
   header[2]  <- 16   # word size (always 16)
@@ -112,7 +112,7 @@ FAduplicate <- function(fa, newfile, fields=character(0), overwrite=FALSE) {
 }
 
 ## TO DO: time format may be as a list of two vectors
-FAcreate <- function(filename, frame, time=NULL, sector.size=1000, 
+FAcreate <- function(filename, frame, time=NULL, sector.size=1000,
                      nsector=10, overwrite=FALSE)
 {
   if (file.exists(filename)) {
@@ -220,7 +220,7 @@ FAmake.frame = function(domain, extension=c(11,11), relaxation=c(8,8), nsmax=NUL
   warning("BEWARE: FAmake.frame is new and mostly untested!")
   if (!inherits(domain,"geodomain")) domain <- attributes(domain)$domain
   frame <- list(FAname=name,FAver=1,FAtype="aladin")
- 
+
   fulldim <- c(domain$nx,domain$ny) + extension
 
 # 1. Dimensions ("CADRE-DIMENSIONS")
@@ -309,7 +309,7 @@ FAmake.frame = function(domain, extension=c(11,11), relaxation=c(8,8), nsmax=NUL
   FArpp <- numeric(8 + 2*nsmax + 4)
   if (any(extension>0)) extzone <- 1 else extzone <- 0
 ## extzone <- -1 also has a meaning, something like "only gridpoint, no spectral" but I never saw such a file..
-## maybe typical for fullpos? 
+## maybe typical for fullpos?
   FArpp[1:8] <- c(sptrunc,extzone,ndlun,ndlux,ndgun,ndgux,nbzonl,nbzong)
 
 ## the rest of the vector is something completely different
@@ -324,7 +324,7 @@ FAmake.frame = function(domain, extension=c(11,11), relaxation=c(8,8), nsmax=NUL
   frame$ndlux <- FArpp[4]
   frame$ndgun <- FArpp[5]
   frame$ndgux <- FArpp[6]
-  frame$nbzonl <- FArpp[7] 
+  frame$nbzonl <- FArpp[7]
   frame$nbzong <- FArpp[8]
   frame$FArpp <- FArpp
 

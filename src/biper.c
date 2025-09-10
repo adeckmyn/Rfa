@@ -35,7 +35,7 @@ void fit_spline(double p[6], double a[4], int np, int bc) {
   a[3] = (ddp3 - ddp2)/6./M ;
 }
 
-//  data is coming from R, so matrix ordering is column-major! 
+//  data is coming from R, so matrix ordering is column-major!
 #define data(i, j) data[ (i) + (j) * *maxx ]
 void biper(double* data, int* nx, int* ny, int* maxx, int* maxy, int* bc) {
   // nx, ny : original dimensions (must be >= 3)

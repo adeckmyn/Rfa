@@ -98,7 +98,7 @@ FindInTar <- function(archname, filename, by=10^7, buffer=FALSE, quiet=TRUE){
   names(result) <- fName
   return(result)
 }
-  
+
 # in a [bgx]zipped file, using seek() to skip to a byte location is unsafe
 # so we do it by reading raw bytes
 # just to avoid having to read multiple GB of data, we do it in steps

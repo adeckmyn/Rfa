@@ -19,13 +19,16 @@ FAechk.open <- function(filename,lswap=TRUE){
 ### so we need to do some weird stuff to get the numbers right!
 ### we get val2 val1 val4 val3 ...
   nval1 <- l1/8 # THIS should be the number of fields
-  seek(ff,p1)
-### make sure you read an EVEN number of numbers!
-  if(lswap){
+  seek(ff, p1)
+  if (lswap){
+    ### make sure you read an EVEN number of values!
     nvh <- ceiling(nval1/2)
     val1 <- readBin(ff,"integer",size=4,n=nvh*2,endian="big")
     reord <- rep(2*(1:nvh),each=2) + c(0,-1) #=2,1,4,3,6,5,...
     val1 <- val1[reord][1:nval1]
+#    mbuff <- readBin(ff, "raw", n=l1)
+#    .C("fa_byteswap", data=mbuff, size=as.integer(8), n=as.integer(nvh))
+#    val1 <- readBin(mbuff, "integer", size=4, endian="little", n=nval1)
   } else {
     val1 <- readBin(ff,"integer",size=4,n=nval1,endian="big")
   }
@@ -38,7 +41,7 @@ FAechk.open <- function(filename,lswap=TRUE){
   npas <- val1[6]      ## other ("passive") fields, currently always 0
   lnsp <- as.logical(val1[7]) ## TRUE means pressure is still ln(pres) ???
 
-  nstep <- attr(fa,"nfields") -3 # the 7 frame fields have already been extracted! 
+  nstep <- attr(fa,"nfields") -3 # the 7 frame fields have already been extracted!
   fld <- val1[8:(7+nfld)]
 ## TODO: check how general this is:
 ## IF NH-DYN: 2 more fields
@@ -113,4 +116,4 @@ FAechkevo <- function(filename,lswap=TRUE){
                          field=names(fe$info$fld),
                          point=1:fe$info$npoints)
   c(fe,data=list(data))
-} 
+}

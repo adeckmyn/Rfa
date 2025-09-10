@@ -23,12 +23,15 @@
 int64_t INT8(unsigned char* x);
 double DBL8(unsigned char * x);
 void byteswap(void* data,int size,int n);
+void fa_byteswap(void* data, int* size, int* n);
 int fa_mmax(int n,int nsmax,int nmsmax);
+void fa_rawreorder(double* fieldin, double* fieldout,int* nmsmax, int* nsmax);
 void fa_countval_spec(int* nmsmax,int *nsmax,int* sptrunc,int*result);
 double fast_pow(double x, int n);
 double IBMfloat(unsigned char*x);
 
 // main function prototypes
+// FILE PARSING
 void fa_fastfind_name(char **filename, double *tar_offset,char **fnm, char **fname,
                       double *foffset, int *flen, int *findex,int *err);
 void fa_fastfind_mem(unsigned char *membuffer, int *bufsize,
@@ -36,7 +39,8 @@ void fa_fastfind_mem(unsigned char *membuffer, int *bufsize,
                      double *foffset, int *flen, int *findex,int *err);
 void fa_fastfind(FILE* fafile,  double *tar_offset,char **fnm, char **fname,
                       double *foffset, int *flen, int *findex,int *err);
-void fa_parse_char(char** filename, double* tar_offset,
+
+void fa_parse_name(char** filename, double* tar_offset,
 		   int* ninfields,
                    char** fnames, double* foffset, int* flen, int*findex,
                    int* spectral, int* ngrib, int* nbits,int* sptrunc, int* sppow,
@@ -46,9 +50,56 @@ void fa_parse_mem(unsigned char* membuffer, int* bufsize,
                   char** fnames, double* foffset, int* flen, int*findex,
                   int* spectral, int* ngrib, int* nbits, int* sptrunc, int* sppow,
                   double* hoffset, int* hlen, int*hindex, int* lparse, int* err);
-void fa_parse_file(FILE* fafile, double* tar_offset,
-		   int* ninfields,
-                   char** fnames, double* foffset,int* flen, int*findex,
-                   int* spectral, int* ngrib, int* nbits, int* sptrunc, int* sppow,
-                   double* hoffset, int* hlen, int*hindex, int* lparse, int* err);
+void fa_parse(FILE* fafile, double* tar_offset,
+	      int* ninfields,
+              char** fnames, double* foffset,int* flen, int*findex,
+              int* spectral, int* ngrib, int* nbits, int* sptrunc, int* sppow,
+              double* hoffset, int* hlen, int*hindex, int* lparse, int* err);
+
+// DECODING
+void fa_grib_expand(unsigned char*inbuf,int nbits, int nval, double *fieldout,
+                    double minval, double maxval, double scale);
+void fa_spectral_combine(double* data1,double* data2,double* data,
+                         int nsmax,int nmsmax,
+                         int sptrunc,int sppow,int* ERR);
+void fa_spectral_order(double* data,int* nmsmax,int* nsmax,
+                       int* nx,int* ny, Rcomplex* fftdata);
+void fa_grib0(unsigned char* grib,int griblen,int nval,double* values,
+              double minval, double maxval,int* ERR);
+void fa_decode(unsigned char* ibuf,int* buflen,double*data,int* ndata,
+               int* nsmax,int* nmsmax,int* ERR);
+
+// LINEAR SMOOTHING
+void smooth_extension(double* data, int* nx, int* ny, int* maxx, int* maxy);
+
+// SPLINE EXTENSION
+void fit_spline(double p[6], double a[4], int np, int bc);
+void biper(double* data, int* nx, int* ny, int* maxx, int* maxy, int* bc);
+
+// ENCODING
+void INT8w(unsigned char* x, int64_t ll);
+void DBL8w(unsigned char * x, double val);
+void fa_message_length_spectral(int *nmsmax, int *nsmax,
+                                int *nbits, int *sptrunc, int* result);
+void fa_grib_squeeze(unsigned char*bitstream,int streamlen,int nbits,
+                     double*data, int nval, double minval, double maxval);
+void fa_spectral_split(double* data1,double* data2,double* data,
+                       int nsmax,int nmsmax,
+                       int sptrunc,int sppow,int* ERR);
+void fa_spectral_order_inv(double* data, int* nmsmax, int* nsmax,
+                           int* nx, int* ny, Rcomplex* fftdata);
+void fa_grib0_write(unsigned char* grib,int griblen,double* values,int nval,
+                    int nbits, double minval, double maxval, int* ERR);
+void fa_encode(unsigned char* obuf,int* buflen,double*data,int* ndata,
+               int* nbits,int* sptrunc,int *spectral,int* lgrib,int*pow,
+               int* nsmax,int* nmsmax,int*ndgl,int*ndlon,int* ERR);
+
+// VERTICAL INTERPOLATIONS
+void fa_interp1(double* p_in, double *v_in, int *n_in,
+                double* p_out, double *v_out, int *n_out);
+void fa_pressures(double *A, double *B, double *pref,
+                  int *nlev, double *psurf, double *pressure);
+void fa_interp2(double *A, double *B, double *pref,
+                double *psurf, int * nlev, double * v_in, int *npoints,
+                double *p_out, int *n_out, double *v_out);
 

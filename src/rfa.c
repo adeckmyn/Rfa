@@ -2,7 +2,7 @@
 // Read big-endian 64bit integers.
 // unfortunately, INT8 doesn't work like INT4 because you only
 // get automatic promotion to int, not to long or more.
-// if you cast every byte to long long before shifting, 
+// if you cast every byte to long long before shifting,
 // the macro becomes terribly long & obfuscated
 // We need INT8 signed, because some values may be <0.
 // probably very sub-optimal, but OK for now
@@ -30,10 +30,14 @@ void byteswap(void* data,int size,int n){
   unsigned char b;
   int i,j;
   unsigned char* buff;
-  buff= (unsigned char*) data;
-  for(j=0;j<n;j++){
-    for(i=0;i<size/2;i++) { b=buff[i];buff[i]=buff[size-1-i];buff[size-1-i]=b;}
-    buff+=size;
+  buff = (unsigned char*) data;
+  for(j=0; j<n; j++){
+    for(i=0; i<size/2; i++) {
+      b = buff[i];
+      buff[i] = buff[size-1-i];
+      buff[size-1-i] = b;
+    }
+    buff += size;
   }
 }
 
@@ -44,7 +48,11 @@ void fa_byteswap(void* data, int* size, int* n){
   unsigned char* buff;
   buff= (unsigned char*) data;
   for(j=0;j< *n;j++){
-    for(i=0;i< *size/2;i++) { b=buff[i];buff[i]=buff[*size-1-i];buff[*size-1-i]=b;}
+    for(i=0;i< *size/2;i++) {
+      b = buff[i];
+      buff[i] = buff[*size-1-i];
+      buff[*size-1-i] = b;
+    }
     buff += *size;
   }
 }
@@ -78,7 +86,7 @@ void fa_rawreorder(double* fieldin, double* fieldout,int* nmsmax, int* nsmax)
     mbuf[m] = mbuf[m-1] + fa_mmax(m-1,*nmsmax,*nsmax) + 1;
 //    printf("%d: %d\n",m,mbuf[m]);
   }
-  
+
   for(n=0;n<=(*nsmax);n++){
     mmax = fa_mmax(n,*nsmax,*nmsmax);
     for(m=0;m<=mmax;m++ ){
@@ -124,7 +132,7 @@ double fast_pow (double x, int n) {
   if (sign) result = 1./result;
   return result;
 }
-  
+
 
 //The reference value (R) uses IBM single precision floating point format.
 //    sAAAAAAA BBBBBBBB BBBBBBBB BBBBBBBB
@@ -164,5 +172,5 @@ double IBMfloat(unsigned char*x){
   if (sign) value = -value;
   return(value);
 }
- 
+
 

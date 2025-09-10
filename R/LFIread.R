@@ -4,7 +4,7 @@
 ### Original version: 2011-08-10
 
 ### Only validated for SURFEX!!!
-### This has NEVER been validated for other data (e.g. Arome) 
+### This has NEVER been validated for other data (e.g. Arome)
 
 ### to change a series of integers into ASCII characters
 ### useful for reading some character-valued records

@@ -12,7 +12,7 @@ FApressure <- function(fa, lev, SP=FAdec(fa, "SURFPRESSION    ") ){
   ph0 <- pref * attr(fa,"frame")$levels$A[lev] + SP * attr(fa,"frame")$levels$B[lev]
 
 ### this formula follows the FullPos 'Scientist guide' documentation (Ryad El Katib, 2002)
-### REFERENCE -> GPPREH, GPXYB, GPREF 
+### REFERENCE -> GPPREH, GPXYB, GPREF
 ### assuming LAPRXPK=.F. (if .T. -> simpler formula without alpha, just (ppl1+ppl2)/2 )
   alpha <- if (lev==1) 1 else 1-ph0/(ph1-ph0)*log(ph1/ph0)
   pp <- ph1 * exp(-alpha)
@@ -80,7 +80,7 @@ FApressures.local <- function(faframe, surfpressure){
   A <- faframe$levels$A
   B <- faframe$levels$B
   pref <- faframe$levels$refpressure
-  if (surfpressure < 10000) surfpressure <- exp(surfpressure) 
+  if (surfpressure < 10000) surfpressure <- exp(surfpressure)
 #stop("Surface pressure must be in Pa! Minimum is 100 hPa = 10000 Pa")
 
   result <- .C("fa_pressures", A=A, B=B, pref=pref, nlev=as.integer(nlev),
@@ -136,7 +136,7 @@ FAsounding <- function(fa, par="TEMPERATURE", lon=NULL, lat=NULL, index=NULL, id
     if (any(surfpres< 10000)) surfpres <- exp(surfpres)
 ## TODO: find the minumum and maximum hybrid levels needed for interpolation to plevels.out
 ##       -> decode only the necessary fields.
-## TODO: if npar>1, try to do all interpolations in 1 call 
+## TODO: if npar>1, try to do all interpolations in 1 call
 ##       -> only calculate pressures and interpol weights once
     if (!is.null(plevels.out)) {
       plevels.out <- sort(plevels.out)
@@ -216,7 +216,7 @@ FAdec3d <- function(fa, par="TEMPERATURE", levtype="S", plevels.out=NULL){
     minlev <- 1
     maxlev <- attr(fa, "frame")$nlev
   }
-  nlev <- maxlev - minlev + 1  
+  nlev <- maxlev - minlev + 1
 #  cat("npoints=",npoints,"\n")
 #  cat("minlev=",minlev,"maxlev=",maxlev,"\n")
 
@@ -224,13 +224,13 @@ FAdec3d <- function(fa, par="TEMPERATURE", levtype="S", plevels.out=NULL){
   field3d <- FAdec(fa, fields)
 
   if (is.null(plevels.out) || nlev == 1) {
-  # no interpolation to pressure levels, 
+  # no interpolation to pressure levels,
   # OR by some incredible luck, the hybrid level is exactly at 1 pressure...
     result <- field3d
     # better just leave original field names as they come from FAdec
     attributes(result)$info$name <- par
     attributes(result)$info$z_type <- "hybrid"
-    
+
     names(dim(result)) <- c("x", "y", "level")
     dimnames(result) <- list("x"=NULL, "y"=NULL, "hybrid"=minlev:maxlev)
   } else {
@@ -253,12 +253,12 @@ FAdec3d <- function(fa, par="TEMPERATURE", levtype="S", plevels.out=NULL){
     if (npo==1) {
       info <- list(name=sprintf("P%05i%s",plevels.out*100,par),
                    level=paste(plevels.out,"hPa"), variable=par)
-      result <- meteogrid::as.geofield(field3i, domain=domain, 
+      result <- meteogrid::as.geofield(field3i, domain=domain,
                                        info=info, time=attr(surfpres,"time"))
     } else {
       # need to shuffle the dimensions for 3d geofield object
       field3i <- array(field3i, dim=c(npo, domain$nx, domain$ny))
-      result <- meteogrid::as.geofield(aperm(field3i, c(2,3,1)), domain, 
+      result <- meteogrid::as.geofield(aperm(field3i, c(2,3,1)), domain,
 				       info=list(name=par, z_type="hPa"),
 				       time=attr(surfpres,"time"))
       names(dim(result))[3] <- "hPa"

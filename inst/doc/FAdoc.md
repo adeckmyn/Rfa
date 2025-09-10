@@ -904,7 +904,11 @@ Just like any FA file.
 
 Detailed information are stored in a data fields called
 `REDOCU0000000000`. It’s just a list of (big-endian, possibly swapped)
-32bit integers.
+32bit integers. But the length of the data is in fact double. Presumably because somebody thought the values were 64bit. Anyway, as far as I can tell, you only need to read half this data sector and interprete it as 32bit big-endian integers. Then you get a vector of values swapped two by two.
+
+Alternatively, you can byteswap this message in blocks of 8, then read little-endian 32bit values in correct order.
+
+The second half of the message appears to be either zero or some undocumented real values (64bit?). Maybe just uninitialised crap.
 
 `RESTEP0000000000` contains the time step as a single big-endian double.
 

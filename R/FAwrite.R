@@ -64,7 +64,7 @@
       nval1 <- .C("fa_countval_spec",as.integer(nmsmax),as.integer(nsmax),
                    as.integer(sptrunc),result=integer(1),PACKAGE="Rfa")$result
       nval2 <- nval - nval1
-      griblen <- 32 + 11 + ceiling(nval1*nbits/8) 
+      griblen <- 32 + 11 + ceiling(nval1*nbits/8)
       if (griblen%%8) griblen <- griblen + (8-griblen%%8)
       mlen <- 56 + griblen + 8*nval2
     }
@@ -210,7 +210,7 @@ FAremove <- function(fa,field,quiet=TRUE){
 FAenc <- function(fa,fieldname,data,lspec=NULL,lgrib=NULL,nbits=NULL,
                   sptrunc=NULL,sppow=NULL,overwrite=TRUE,quiet=TRUE){
   if (!inherits(fa,"FAfile")) fa <- FAopen(fa,quiet=quiet)
-  if (!is.null(attr(fa,"tarfile"))) 
+  if (!is.null(attr(fa,"tarfile")))
     stop("Manipulation of files in an archive is forbidden. Read only!")
   fnr <- FAfind(fa,fieldname)
 
@@ -224,7 +224,7 @@ FAenc <- function(fa,fieldname,data,lspec=NULL,lgrib=NULL,nbits=NULL,
 
   if (!quiet) cat("This is an existing data field (fnr=",fnr,"), data will be replaced.\n")
 
-# in this case, by default you use exactly the same encoding as the original 
+# in this case, by default you use exactly the same encoding as the original
   if (!is.raw(data)){
     if (is.null(lspec)) lspec <- fa$list$spectral[fnr]
     if (is.null(lgrib)) lgrib <- !is.na(fa$list$nbits[fnr])
@@ -284,10 +284,10 @@ FAenc <- function(fa,fieldname,data,lspec=NULL,lgrib=NULL,nbits=NULL,
     if (flen/8 == header[8]) {
 #-- BUGLET: ?do holes count also? ?we should also consider the 7 (8) metafields?
       header[8] <- max(c(fa$list$length[-fnr],fa$holes$length))/8
-    } 
+    }
   }
 
-  header <- FAheader.date(header) 
+  header <- FAheader.date(header)
   attr(fa,"header") <- header
   FAwrite_header(ff, header)
   close(ff)
