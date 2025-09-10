@@ -7,7 +7,7 @@
 #include <math.h>
 #include <R.h>
 
-//  data is coming from R, so matrix ordering is column-major! 
+//  data is coming from R, so matrix ordering is column-major!
 #define data(i, j) data[ (i) + (j) * *maxx ]
 void smooth_extension(double* data, int* nx, int* ny, int* maxx, int* maxy) {
   int i, j, k;

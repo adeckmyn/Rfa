@@ -61,7 +61,7 @@ ectoplot <- function(data,add=FALSE,...){
 biper <- function(data, ext = c(11,11), bc=0){
   if (length(ext) == 1) ext <- rep(ext, 2)
   if (any(dim(data) < 3 )) stop("grid dimensions must be >= 3")
-  realdim <- dim(data) 
+  realdim <- dim(data)
   newdim <- dim(data) + ext
   data2 <- matrix(0, nrow=newdim[1],ncol=newdim[2])
   data2[1:realdim[1], 1:realdim[2]] <- data
@@ -78,7 +78,7 @@ biper <- function(data, ext = c(11,11), bc=0){
 }
 
 add_ext <- function(data, ext=c(11,11), bc=0) {
-  realdim <- dim(data) 
+  realdim <- dim(data)
   newdim <- dim(data) + ext
   data2 <- matrix(0, nrow=newdim[1],ncol=newdim[2])
   data2[1:realdim[1], 1:realdim[2]] <- data
@@ -88,7 +88,7 @@ add_ext <- function(data, ext=c(11,11), bc=0) {
 
 smooth_ext <- function(data, ext=c(11,11)){
 #  stop("biperiodicisation not available.")
-  newdim <- dim(data) 
+  newdim <- dim(data)
   realdim <- dim(data) - ext
   res <- .C("smooth_extension", data=as.numeric(as.vector(data)),
               as.integer(realdim[1]), as.integer(realdim[2]),

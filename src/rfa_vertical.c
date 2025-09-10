@@ -4,7 +4,7 @@
 // simple linear interpolation using log(p)
 // No extrapolation
 // p_in, p_out MUST be in ascending order!!!
-void fa_interp1(double* p_in, double *v_in, int *n_in, 
+void fa_interp1(double* p_in, double *v_in, int *n_in,
                 double* p_out, double *v_out, int *n_out) {
 
   int i,j;
@@ -12,7 +12,7 @@ void fa_interp1(double* p_in, double *v_in, int *n_in,
   i=0;
   for (j=0; j < *n_out; j++) {
     while (p_in[i] < p_out[j] && i < *n_in) i++;
-    if (i==0) v_out[j] = (p_in[i] > p_out[j]) ? NA_REAL : v_in[i] ; 
+    if (i==0) v_out[j] = (p_in[i] > p_out[j]) ? NA_REAL : v_in[i] ;
     else if (i== *n_in && p_in[i] < p_out[j]) v_out[j] = NA_REAL;
     else  v_out[j] = v_in[i-1] + (v_in[i] - v_in[i-1])/(p_in[i] - p_in[i-1]) * (p_out[j] - p_in[i-1]);
   }
@@ -50,7 +50,7 @@ void fa_pressures(double *A, double *B, double *pref, int *nlev, double *psurf, 
 }
 
 
-void fa_interp2(double *A, double *B, double *pref, 
+void fa_interp2(double *A, double *B, double *pref,
                 double *psurf, int * nlev, double * v_in, int *npoints,
                 double *p_out, int *n_out, double *v_out) {
 

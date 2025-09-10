@@ -41,7 +41,7 @@ FAechk.open <- function(filename,lswap=TRUE){
   npas <- val1[6]      ## other ("passive") fields, currently always 0
   lnsp <- as.logical(val1[7]) ## TRUE means pressure is still ln(pres) ???
 
-  nstep <- attr(fa,"nfields") -3 # the 7 frame fields have already been extracted! 
+  nstep <- attr(fa,"nfields") -3 # the 7 frame fields have already been extracted!
   fld <- val1[8:(7+nfld)]
 ## TODO: check how general this is:
 ## IF NH-DYN: 2 more fields
@@ -116,4 +116,4 @@ FAechkevo <- function(filename,lswap=TRUE){
                          field=names(fe$info$fld),
                          point=1:fe$info$npoints)
   c(fe,data=list(data))
-} 
+}

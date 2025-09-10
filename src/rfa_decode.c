@@ -73,7 +73,7 @@ void fa_spectral_combine(double* data1,double* data2,double* data,
 void fa_spectral_order(double* data,int* nmsmax,int* nsmax,
     int* nx,int* ny, Rcomplex* fftdata){
 // re-order the raw data stream into complex FFT components
-// Rcomplex is a struct with double i and r 
+// Rcomplex is a struct with double i and r
 // Usually compatible with C99 "double complex"
 
 // output is a matrix NX x NY in the 2D-FFT format of R
@@ -200,7 +200,7 @@ void fa_grib0(unsigned char* grib,int griblen,int nval,double* values,
     return;
   }
   grib += len4;
-  
+
 //section 5
   sec5 = sec4 + len4;
   len5 = 4;
@@ -218,7 +218,7 @@ void fa_grib0(unsigned char* grib,int griblen,int nval,double* values,
   refval=IBMfloat(sec4+6);
   scalefactor=INT2((sec4+4)); //first bit is sign bit! Max value is 2^15.
   if (scalefactor > 32768) scalefactor = 32768 - scalefactor;
-// these are never used for normal ALADIN/ARPEGE files  
+// these are never used for normal ALADIN/ARPEGE files
 // OOOPS: apparently they are (grib type=1 in stead of 2)
 #ifdef DEBUG
   Rprintf("Sector 4:\n");
@@ -301,7 +301,7 @@ void fa_decode(unsigned char* ibuf,int* buflen,double*data,int* ndata,
         data[i] = (double) *((float*) spbuf);
         if (i < nval-1) data[i+1] = (double) *((float*) (spbuf+4));
       }
-        
+
       // FIXME: in case of Single Precision: byteswap by 4 or by 8?
       // In echkevo, it is by 8!
       // byteswap(obuf, 8, nval/2);

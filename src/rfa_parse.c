@@ -34,6 +34,7 @@ void fa_fastfind_name(char **filename, double *tar_offset,char **fnm, char **fna
   if (fclose(fafile)) Rprintf("Error closing file.\n");
 }
 
+// never used
 void fa_fastfind_mem(unsigned char *membuffer, int *bufsize,
                      char **fnm, char **fname,
                      double *foffset, int *flen, int *findex,int *err){
@@ -53,7 +54,7 @@ void fa_fastfind_mem(unsigned char *membuffer, int *bufsize,
 
 
 void fa_fastfind(FILE* fafile,  double *tar_offset,char **fnm, char **fname,
-                      double *foffset, int *flen, int *findex,int *err){
+                 double *foffset, int *flen, int *findex, int *err){
   int blocksize, nfields, maxfields,nameblock_size,nlist;
   int i,j,k,lfound;
   int64_t header[22],buff[3],next_byte,name_section_offset;
@@ -70,7 +71,7 @@ void fa_fastfind(FILE* fafile,  double *tar_offset,char **fnm, char **fname,
   if (little_endian) byteswap(header, 8, 22);
   blocksize = header[0]*8;
   nfields = header[5]; // this includes the holes
-  maxfields = header[12]; // number of fields per sequence 
+  maxfields = header[12]; // number of fields per sequence
   nameblock_size = header[19]; // how many "blocks" for info? Almost always 1
 
 // this is looped if there are multiple name sectors
@@ -88,8 +89,8 @@ void fa_fastfind(FILE* fafile,  double *tar_offset,char **fnm, char **fname,
 // sometimes you may have to skip to next name sector...`
   for (i=0; i<nfields; i++){
     k = fread(sbuf, 1, 16, fafile);
-//    if(!strcmp(sbuf,*fname)) { 
-    if (strstr(sbuf, *fnm)) { 
+//    if(!strcmp(sbuf,*fname)) {
+    if (strstr(sbuf, *fnm)) {
 #ifdef DEBUG
       Rprintf("Found field %s at i=%i\n", sbuf, i);
 #endif
@@ -196,7 +197,7 @@ void fa_parse(FILE* fafile, double* tar_offset,
   int nlist,ndata,ll;
   int64_t header[22],buff[3],next_byte,name_section_offset,address_section_offset;
   int little_endian=( *(uint16_t*)"a" < 255); // TRUE if little-endian
-  
+
   char sbuf[17],*empty="                ";
 
   *err=0;
@@ -221,7 +222,7 @@ void fa_parse(FILE* fafile, double* tar_offset,
   blocksize = header[0]*8;
   nholes = header[20];
   nfields = header[5] - nholes;
-  maxfields = header[12]; // number of fields per sequence 
+  maxfields = header[12]; // number of fields per sequence
   nameblock_size = header[19]; // how many "blocks" for info? Almost always 1
 
 #ifdef DEBUG
@@ -261,9 +262,9 @@ void fa_parse(FILE* fafile, double* tar_offset,
     for (i=0 ; i<ndata ; i++){
       k = fread(sbuf, 1, 16, fafile);
 //      Rprintf("article %i: %s\n",i+1,sbuf);
-   
+
 // check for holes, which have an empty name field
-      if(strcmp(sbuf,empty)) { 
+      if(strcmp(sbuf,empty)) {
         if(ccfields<nfields) {
           findex[ccfields] = i; // so the first field in every name sector gets index 0
           strcpy(fnames[ccfields++], sbuf);
@@ -285,7 +286,7 @@ void fa_parse(FILE* fafile, double* tar_offset,
           *err = -1;
           break;
         }
-      } 
+      }
     }
     if (*err) break;
 
@@ -296,7 +297,7 @@ void fa_parse(FILE* fafile, double* tar_offset,
     for (i=0 ; i<ndata ; i++){
       k = fread(buff, 2, 8, fafile);
       if (little_endian) byteswap(buff,8,2);
-// the file has length and start position in 8-byte words. 
+// the file has length and start position in 8-byte words.
 // We change this to bytes and to offset (easier when using "fseek")
 // also, we add the tar_offset
       if (is_hole[i]) {

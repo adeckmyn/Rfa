@@ -95,7 +95,7 @@ FAopen <- function(filename, archname=NULL, tar.offset=NULL, lparse=TRUE, quiet=
                   nbits=integer(nfields),
                   sptrunc=integer(nfields), sppow=integer(nfields),
                   hoffset=numeric(nholes+1), hlen=integer(nholes+1),
-                  hindex=integer(nholes+1), 
+                  hindex=integer(nholes+1),
                   lparse=as.integer(lparse),err=integer(1))
     metadata <- FAread_meta(filename, archname=archname)
   } else {
@@ -172,7 +172,7 @@ FAfind <- function(fa, field, as_name=FALSE){
     # now try a perfect match
     fnr <- match(sprintf("%-16.16s", field), fa$list$name)
     if (is.na(fnr)) {
-      # maybe the name was incomplete ("CLSTEMP")? 
+      # maybe the name was incomplete ("CLSTEMP")?
       # not recommended, but I do it myself...
       fnr <- grep(field, fa$list$name, fixed=TRUE)
 #      if (length(fnr)==0)
@@ -184,7 +184,7 @@ FAfind <- function(fa, field, as_name=FALSE){
 FAgrep <- function(fa, field, as_name=TRUE) {
   if (!inherits(fa, "FAfield")) fa <- FAopen(fa)
   grep(field, fa$list$name, value=as_name)
-}  
+}
 
 
 "FAdescribe" <- function(fname) {
@@ -202,7 +202,7 @@ FAgrep <- function(fa, field, as_name=TRUE) {
     varname <- substr(fname,4,16)
   }  else if (substr(fname,1,3)=="MER" |substr(fname,1,3)=="MSL" ) {
     levelinfo <- "MSL"
-    varname <- substr(fname,4,16) 
+    varname <- substr(fname,4,16)
   } else if (substr(fname,1,1)=="S" & regexpr("[0-9]{3}",substr(fname,2,4))==1) {
     levelinfo <- paste("Hybrid Level",as.numeric(substr(fname,2,4)))
     varname <- substr(fname,5,16)

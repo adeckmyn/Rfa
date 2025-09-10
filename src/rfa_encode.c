@@ -23,13 +23,13 @@ void fa_message_length_spectral(int *nmsmax,int *nsmax,int *nbits,int *sptrunc,i
   if(nbits>0){
       fa_countval_spec(nmsmax,nsmax,sptrunc,&nval1);
 // the grib message is padded to a multiple of 8 bytes
-      griblen = ceil( (32 + 11 + nval1* *nbits/8)/8); 
+      griblen = ceil( (32 + 11 + nval1* *nbits/8)/8);
 
       nval2=nval-nval1;
       data_length=griblen + nval2;
     }
     else data_length=nval;
-    
+
   *result = 8*(header_length + data_length);
 }
 
@@ -40,7 +40,7 @@ void fa_message_length_spectral(int *nmsmax,int *nsmax,int *nbits,int *sptrunc,i
 // change date
 // write name & location is info sectors
 
-// encode a set of integers to a stream 
+// encode a set of integers to a stream
 // the integers are masked by (2^nbits - 1), to be sure we don't run into problems
 // but in principle, the values should only be 0...(2^nbits-1) anyway
 void fa_grib_squeeze(unsigned char*bitstream,int streamlen,int nbits,
@@ -67,7 +67,7 @@ void fa_grib_squeeze(unsigned char*bitstream,int streamlen,int nbits,
     while (bbits >= 8) {
       bbits -= 8;
       *bitstream++ = (buff>>bbits) & 255;
-    } 
+    }
   }
 // after the last value, we may have a few bits left (max 7)
 // we pad with zeroes
@@ -112,7 +112,7 @@ void fa_spectral_split(double* data1,double* data2,double* data,
 void fa_spectral_order_inv(double* data, int* nmsmax, int* nsmax,
     int* nx, int* ny, Rcomplex* fftdata) {
 // re-order FTT components from R into the raw data stream quadruplets
-// Rcomplex is a struct with double i and r 
+// Rcomplex is a struct with double i and r
 // Usually compatible with C99 "double complex"
 // nx,ny are always even
 // as a result, the components range from [-m/2+1,m/2]
@@ -138,7 +138,7 @@ void fa_spectral_order_inv(double* data, int* nmsmax, int* nsmax,
         a1=a2=a3=0;
       }
 //      else if (n==0) a1=a3=0;
-        
+
       else if (m>0 && m<Mmax) {
 // m<0,n>=0
         ind2 = n*(*nx) + (*nx - m);
@@ -158,7 +158,7 @@ void fa_spectral_order_inv(double* data, int* nmsmax, int* nsmax,
         a3 =(-fftdata[ind1].r + fftdata[ind3].r)/2.;
         a1 =(fftdata[ind1].i - fftdata[ind3].i)/2.;
         a2 =(fftdata[ind1].i + fftdata[ind3].i)/2.;
-        
+
       }
       data[offset]=a0;
       data[offset+1]=a1;
@@ -212,7 +212,7 @@ void fa_grib0_write(unsigned char* grib,int griblen,double* values,int nval,
   sec1[0]=(len1>>16)&255;//always =0
   sec1[1]=(len1>>8)&255; //=0
   sec1[2]=(len1)&255;    //=24
-  sec1[3]=0; 
+  sec1[3]=0;
 // some FLAGS that have to be zero:
   sec1[7]=0;
 
@@ -231,7 +231,7 @@ void fa_grib0_write(unsigned char* grib,int griblen,double* values,int nval,
 // ALADIN writes the correct type (e.g. 109 for hybrid levels), but sets level to zero anyway...
 // CHECK THAT MODEL RUNS OK IF THIS IS CHANGED.
   sec1[9]=1; // type of level (1=sfc etc)
-  sec1[10]=sec1[11]=0; // level 
+  sec1[10]=sec1[11]=0; // level
 // date : just write a default date, it's totally irrelevant
   sec1[12]=93;sec1[13]=9;sec1[14]=2;sec1[15]=sec1[16]=0; //YY,MM,DD,HH:MM
 // time unit, range & flags
@@ -261,7 +261,7 @@ void fa_grib0_write(unsigned char* grib,int griblen,double* values,int nval,
   sec4[2] = (len4)&255;
 // number of padding bits (0-15):
   npadding=8*(len4-11)-nbits*nval;
-  sec4[3] = npadding; 
+  sec4[3] = npadding;
 //sec4[3] also contains some flags...
 // 1: GP or SP  2: packing 3:float or int 4: more flags in byte14
 // these must all be 0, so nothing left to do..
@@ -312,7 +312,7 @@ void fa_encode(unsigned char* obuf,int* buflen,double*data,int* ndata,
   else nval = *ndgl * *ndlon;
 
   if(nval != *ndata) {
-    Rprintf("ERROR: expected nval=%d, but input data has length ndata=%d\n",nval,*ndata); 
+    Rprintf("ERROR: expected nval=%d, but input data has length ndata=%d\n",nval,*ndata);
     return;
   }
 #ifdef DEBUG
@@ -354,7 +354,7 @@ void fa_encode(unsigned char* obuf,int* buflen,double*data,int* ndata,
       INT8w(obuf,(int64_t) *sptrunc);
       INT8w(obuf+8,(int64_t) *pow);
       obuf += 16;
-// first split the spectral data 
+// first split the spectral data
       fa_countval_spec(nmsmax,nsmax,sptrunc,&nval1);
       part1= (double*) malloc(nval1 * sizeof(double));
       nval2 = nval - nval1;
