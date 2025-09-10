@@ -109,7 +109,8 @@ void fa_spectral_split(double* data1,double* data2,double* data,
 }
 
 
-void fa_spectral_order_inv(double* data,int* nmsmax,int* nsmax,int* nx,int* ny, Rcomplex* fftdata){
+void fa_spectral_order_inv(double* data, int* nmsmax, int* nsmax,
+    int* nx, int* ny, Rcomplex* fftdata) {
 // re-order FTT components from R into the raw data stream quadruplets
 // Rcomplex is a struct with double i and r 
 // Usually compatible with C99 "double complex"

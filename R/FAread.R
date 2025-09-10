@@ -253,8 +253,12 @@ FAread_msg <- function(fa, fpos, flen) {
       if (!is.null(attr(fa, "tarfile"))) {
         filename <- attr(fa, "tarfile")
         if (fpos < attr(fa, "tar.offset")) stop("FAread_msg: field position smaller than tar offset.")
-      } else filename <- attr(fa, "filename")
-    } else stop("FAread_msg error: bad fa")
+      } else {
+        filename <- attr(fa, "filename")
+      }
+    } else {
+      stop("FAread_msg error: fa must be character, FAfile or raw membuffer.")
+    }
     # FIXME: will fail for compressed files tgz etc.
     fa <- file(filename, open="rb")
   }
@@ -269,7 +273,8 @@ FAread_msg <- function(fa, fpos, flen) {
 
 FAraw2fft <- function(rawdata,nmsmax,nsmax,ndlon,ndgl){
 ### C routine, but R expects FFT components ordered c(0:m,(-m):(-1)), not (-m):m
-  data <- .C("fa_spectral_order",data=rawdata,nmsmax=as.integer(nmsmax),nsmax=as.integer(nsmax),
+  data <- .C("fa_spectral_order",data=rawdata,nmsmax=as.integer(nmsmax),
+                      nsmax=as.integer(nsmax),
                       nx=as.integer(ndlon),ny=as.integer(ndgl),
                       fftdata=complex(ndlon*ndgl,0,0))$fftdata
   matrix(data,ncol=ndgl,nrow=ndlon,byrow=F)

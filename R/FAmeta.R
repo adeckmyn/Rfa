@@ -3,7 +3,7 @@
 ### This is even independent from FAopen !
 FAread_meta <- function(filename, archname=NULL, quiet=TRUE){
   if (inherits(filename, "connection")) {
-    # here we suppose it's a bsic file pointer, NOT in an archive!
+    # here we suppose it's a basic file pointer, NOT in an archive!
     ff <- filename
     offset <- 0
   } else {
@@ -15,13 +15,16 @@ FAread_meta <- function(filename, archname=NULL, quiet=TRUE){
       ff <- rawConnection(attr(filename, "membuff"))
       offset <- 0
     } else {
+      # there is no raw memory buffer, so we assume the data is NOT compressed
+      # e.g. use FindInTar(,buffer=TRUE) first and then call FAread_meta()
       if (inherits(filename, "FAfile")) { # it's an FA object, not a filename
         archname <- attr(filename, "tarfile")
         offset <- attr(filename, "tar.offset")
         filename <- attr(filename, "filename")
       } else {
         if (!is.null(archname)) {
-          # FIXME: this will be very inefficient with compressed archives
+          atype <- arch_type(archname)
+          if (atype != "tar") error("FAread_meta only accepts uncompressed files or raw.")
           offset <- FindInTar(archname, filename)
         } else if (!is.null(attr(filename, "tarfile"))) {
           archname <- attr(filename, "tarfile")
@@ -33,6 +36,8 @@ FAread_meta <- function(filename, archname=NULL, quiet=TRUE){
       if (is.null(archname)) {
         ff <- file(filename, open="rb")
       } else {
+        atype <- arch_type(archname)
+        if (atype != "tar") error("FAread_meta only accepts uncompressed files or raw.")
         ff <- file(archname, open="rb")
       }
     }

@@ -30,10 +30,14 @@ void byteswap(void* data,int size,int n){
   unsigned char b;
   int i,j;
   unsigned char* buff;
-  buff= (unsigned char*) data;
-  for(j=0;j<n;j++){
-    for(i=0;i<size/2;i++) { b=buff[i];buff[i]=buff[size-1-i];buff[size-1-i]=b;}
-    buff+=size;
+  buff = (unsigned char*) data;
+  for(j=0; j<n; j++){
+    for(i=0; i<size/2; i++) {
+      b = buff[i];
+      buff[i] = buff[size-1-i];
+      buff[size-1-i] = b;
+    }
+    buff += size;
   }
 }
 
@@ -44,7 +48,11 @@ void fa_byteswap(void* data, int* size, int* n){
   unsigned char* buff;
   buff= (unsigned char*) data;
   for(j=0;j< *n;j++){
-    for(i=0;i< *size/2;i++) { b=buff[i];buff[i]=buff[*size-1-i];buff[*size-1-i]=b;}
+    for(i=0;i< *size/2;i++) {
+      b = buff[i];
+      buff[i] = buff[*size-1-i];
+      buff[*size-1-i] = b;
+    }
     buff += *size;
   }
 }
